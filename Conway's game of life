@@ -1,0 +1,145 @@
+# le jeu de la vie
+
+import pygame as py
+import random as rd
+
+py.init()
+
+largeur, longueur = 1360, 800
+blanc = (255, 255, 255)
+noir = (0, 0, 0)
+gris = (60, 60, 60)
+
+screen = py.display.set_mode((largeur, longueur))
+py.display.set_caption("Le jeu de la vie")
+
+x = [i * 8 - 320 for i in range(250)]
+y = [i * 8 - 320 for i in range(200)]
+
+liste = []
+carré = set(liste)
+
+    
+current_frame = 0
+
+play = False
+stylo = True
+gomme = False
+running = True
+
+clock = py.time.Clock()
+
+while running:
+    screen.fill(noir)
+
+    for event in py.event.get():
+        if event.type == py.QUIT:
+            running = False
+
+        elif event.type == py.KEYDOWN and event.key == py.K_p :
+            play = not play
+
+        elif event.type == py.KEYDOWN and event.key == py.K_m :
+            print("coordonné :", carré, "nombre :", len(carré))
+
+        elif event.type == py.KEYDOWN and event.key == py.K_r :
+            for i in range(-40, len(x) - 40) :
+                for j in range(-40, len(y) - 40) :
+                    if rd.randint(1, 20) == 1 :
+                            carré.add((x[i], y[j]))
+
+        elif event.type == py.KEYDOWN and event.key == py.K_c :
+            carré.clear()
+
+        elif event.type == py.KEYDOWN and event.key == py.K_s :
+            gomme = False
+            stylo = True
+
+        elif event.type == py.KEYDOWN and event.key == py.K_g :
+            stylo = False
+            gomme = True
+
+
+    if play :
+        for i in x :
+            py.draw.line(screen, noir, (i, 0), (i, longueur))
+        for i in y :
+            py.draw.line(screen, noir, (0, i), (largeur, i))
+
+        py.draw.line(screen, gris, (0, 0), (0, 799))
+        py.draw.line(screen, gris, (1359, 0), (1359, 799))
+        py.draw.line(screen, gris, (0, 0), (1359, 0))
+        py.draw.line(screen, gris, (0, 799), (1359, 799))
+
+        nouveau_carré = set()
+        nouveau_carré_supr = set()
+
+        for i in range(len(x) - 1) :
+            for j in range(len(y) - 1) :
+                voisins = [(x[i-1], y[j-1]), (x[i], y[j-1]), (x[i+1], y[j-1]),
+                       (x[i-1], y[j]), (x[i+1], y[j]),
+                       (x[i-1], y[j+1]), (x[i], y[j+1]), (x[i+1], y[j+1])]
+
+                nb_voisins_carré = sum((i in carré) for i in voisins)           
+
+                if (x[i], y[j]) in carré :
+                    if nb_voisins_carré < 2 or nb_voisins_carré > 3 :
+                        nouveau_carré_supr.add((x[i], y[j]))
+
+                else :
+                    if nb_voisins_carré == 3 :
+                        nouveau_carré.add((x[i], y[j]))
+
+        for i in nouveau_carré_supr :
+            if i in carré:
+                carré.remove(i)
+
+        for i in nouveau_carré :
+            carré.add(i)
+
+    if not play :
+        for i in x :
+            py.draw.line(screen, gris, (i, 0), (i, longueur))
+        for i in y :
+            py.draw.line(screen, gris, (0, i), (largeur, i))
+
+    if stylo :
+        if event.type == py.MOUSEBUTTONDOWN and event.button == 1 :
+            for i in range(-40, len(x) - 40):
+                for j in range(-40, len(y) - 40):
+                    if (x[i] < event.pos[0] < x[i+1] 
+                    and y[j] < event.pos[1] < y[j+1]) and (x[i], y[j]) not in carré :
+                        carré.add((x[i], y[j]))
+                            
+
+        elif py.mouse.get_pressed()[0]:  
+            mouse_pos = py.mouse.get_pos()
+            for i in range(-40, len(x) - 40):
+                for j in range(-40, len(y) - 40):
+                    if (x[i] < mouse_pos[0] < x[i+1] 
+                    and y[j] < mouse_pos[1] < y[j+1]) and(x[i], y[j]) not in carré :
+                        carré.add((x[i], y[j]))
+
+
+    if gomme :
+        if event.type == py.MOUSEBUTTONDOWN and event.button == 1 :
+            for i in range(-40, len(x) - 40):
+                for j in range(-40, len(y) - 40):
+                    if (x[i] < event.pos[0] < x[i+1] and 
+                    y[j] < event.pos[1] < y[j+1]) and (x[i], y[j]) in carré :
+                            carré.remove((x[i], y[j]))
+        elif py.mouse.get_pressed()[0]:  
+            mouse_pos = py.mouse.get_pos()
+            for i in range(-40, len(x) - 40):
+                for j in range(-40, len(y) - 40):
+                    if (x[i] < event.pos[0] < x[i+1] and 
+                    y[j] < event.pos[1] < y[j+1]) and (x[i], y[j]) in carré :
+                            carré.remove((x[i], y[j]))
+
+    for i in carré :
+        py.draw.rect(screen, blanc, (i[0], i[1], 8, 8))
+
+    py.display.flip()
+    clock.tick(60)
+
+py.quit()
